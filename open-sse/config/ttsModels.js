@@ -64,9 +64,10 @@ export const TTS_MODELS_CONFIG = {
   },
   elevenlabs: {
     models: [
+      { id: "eleven_v3",              name: "Eleven v3 (Most Expressive · 70+ langs)", type: "tts" },
+      { id: "eleven_multilingual_v2", name: "Multilingual v2 (Quality)",  type: "tts" },
       { id: "eleven_flash_v2_5",      name: "Flash v2.5 (Fastest)",      type: "tts" },
       { id: "eleven_turbo_v2_5",      name: "Turbo v2.5 (Fast)",         type: "tts" },
-      { id: "eleven_multilingual_v2", name: "Multilingual v2 (Quality)",  type: "tts" },
       { id: "eleven_monolingual_v1",  name: "Monolingual v1 (English)",  type: "tts" },
     ],
     // voices come from API, not hardcoded

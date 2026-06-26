@@ -10,6 +10,7 @@ import { getCodexUsage, consumeCodexRateLimitResetCredit } from "./usage/codex.j
 export { consumeCodexRateLimitResetCredit };
 import { getKiroUsage } from "./usage/kiro.js";
 import { getMiniMaxUsage } from "./usage/minimax.js";
+import { getElevenLabsUsage } from "./usage/elevenlabs.js";
 import { getCodeBuddyCnUsage } from "./usage/codebuddy-cn.js";
 import {
   getQwenUsage,
@@ -41,6 +42,7 @@ const USAGE_HANDLERS = {
   "glm-cn": (c) => getGlmUsage(c.apiKey, c.provider, c.proxyOptions),
   minimax: (c) => getMiniMaxUsage(c.apiKey, c.provider, c.proxyOptions),
   "minimax-cn": (c) => getMiniMaxUsage(c.apiKey, c.provider, c.proxyOptions),
+  elevenlabs: (c) => getElevenLabsUsage(c.apiKey, c.proxyOptions),
   "vercel-ai-gateway": (c) => getVercelAiGatewayUsage(c.apiKey, c.proxyOptions),
   "codebuddy-cn": (c) => getCodeBuddyCnUsage(c.accessToken, c.apiKey, c.providerSpecificData, c.proxyOptions),
 };
