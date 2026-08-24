@@ -18,6 +18,7 @@ import { resolveZedModels } from "open-sse/shared/zedAuth.js";
 import { updateProviderCredentials } from "@/sse/services/tokenRefresh";
 import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
 import { capabilitiesFromServiceKind, getCapabilitiesForModel, aggregateComboCapabilities } from "open-sse/providers/capabilities.js";
+import { comboTokenLimits, splitModelRef } from "open-sse/services/comboLimits.js";
 
 // Qoder shares one live resolver across intl (qoder) and CN (qoder-cn); the
 // credentials carry the provider id so qoderModels picks the right region's
@@ -311,6 +312,13 @@ export async function buildModelsList(kindFilter, options = {}) {
 
   // Lookup map so aggregateComboCapabilities can recursively resolve nested combos
   const comboByName = Object.fromEntries(combos.map((c) => [c.name, c.models]));
+  const aliasToProviderId = Object.fromEntries(
+    Object.entries(PROVIDER_ID_TO_ALIAS).map(([id, alias]) => [alias, id])
+  );
+  const capsForModelRef = (ref) => {
+    const { alias, modelId } = splitModelRef(ref);
+    return getCapabilitiesForModel(aliasToProviderId[alias] || alias, modelId);
+  };
 
   // Combos first (filtered by kind). Web combos expose `kind` so AI knows search vs fetch.
   for (const combo of combos) {
@@ -325,15 +333,19 @@ export async function buildModelsList(kindFilter, options = {}) {
     } else {
       const comboCaps = aggregateComboCapabilities(combo.models, comboByName);
       if (comboCaps) entry.capabilities = comboCaps;
+      // Same snake_case token limits individual models carry, so a client
+      // sizing its context window off /v1/models does not fall back to
+      // guessing from the name. A combo can route to any member, so the pool
+      // can only promise what its smallest member accepts.
+      const { contextWindow, maxOutput } = comboTokenLimits(combo.models, capsForModelRef);
+      if (Number.isFinite(contextWindow)) entry.context_length = contextWindow;
+      if (Number.isFinite(maxOutput)) entry.max_completion_tokens = maxOutput;
     }
     models.push(entry);
   }
 
   if (connections.length === 0) {
     // DB unavailable -> return static models, filtered by per-model kind
-    const aliasToProviderId = Object.fromEntries(
-      Object.entries(PROVIDER_ID_TO_ALIAS).map(([id, alias]) => [alias, id])
-    );
     for (const [alias, providerModels] of Object.entries(PROVIDER_MODELS)) {
       const providerId = aliasToProviderId[alias] || alias;
       if (!providerMatchesKinds(providerId, kindFilter)) continue;
